@@ -228,7 +228,7 @@ button:disabled{
             type="text"
             id="kodeInput"
             maxlength="8"
-            placeholder="HURUF KAPITAL"
+            placeholder="DI SINI"
             autocomplete="off"
         >
 
@@ -293,7 +293,7 @@ async function cekKode(){
     if(kode === ""){
 
         tampilPesan(
-            "Kode ujian harus diisi.",
+            "Kode belajar harus diisi.",
             "error"
         );
 
@@ -307,7 +307,7 @@ async function cekKode(){
     tombol.disabled = true;
 
     tampilPesan(
-        "Memeriksa kode ujian...",
+        "Memeriksa kode belajar...",
         "loading"
     );
 
@@ -326,7 +326,7 @@ async function cekKode(){
         if(data.status){
 
             tampilPesan(
-                "Kode benar. Mengalihkan ke ujian...",
+                "Kode benar. Mengalihkan ke MPI...",
                 "success"
             );
 
@@ -345,7 +345,7 @@ async function cekKode(){
         else{
 
             tampilPesan(
-                "Kode ujian tidak sesuai.",
+                "Kode belajar tidak sesuai.",
                 "error"
             );
 
