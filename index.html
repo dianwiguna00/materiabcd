@@ -635,61 +635,66 @@ const API_URL =
 
 /* CEK KODE */
 
-async function cekKode() {
+function cekKode() {
 
-    const kodeInput =
-        document.getElementById("kodeInput");
+    const kodeInput = document.getElementById("kodeInput");
+    const tombol = document.getElementById("btnMulai");
+    const kode = kodeInput.value.trim().toUpperCase();
 
-    const kode =
-        kodeInput.value.trim().toUpperCase();
-
-    const tombol =
-        document.getElementById("btnMulai");
-
-    if(!navigator.onLine) {
-
-        tampilPesan(
-            "Tidak ada koneksi internet.",
-            "error"
-        );
-
+    if (!navigator.onLine) {
+        tampilPesan("Tidak ada koneksi internet.", "error");
         return;
     }
 
-    if(kode === "") {
-
-        tampilPesan(
-            "Silakan masukkan kode belajar terlebih dahulu.",
-            "error"
-        );
-
+    if (kode === "") {
+        tampilPesan("Silakan masukkan kode belajar terlebih dahulu.", "error");
         kodeInput.focus();
-
         return;
     }
+
+    // Cegah permintaan ganda
+    if (tombol.disabled) return;
 
     tombol.disabled = true;
-
     tombol.innerHTML = "⏳ MEMERIKSA KODE...";
+    tampilPesan("Sedang memeriksa kode belajar...", "loading");
 
-    tampilPesan(
-        "Sedang memeriksa kode belajar...",
-        "loading"
-    );
+    let selesai = false;
+    const script = document.createElement("script");
 
-    try {
+    function bersihkan() {
+        selesai = true;
 
-        const response = await fetch(
-            `${API_URL}?kode=${encodeURIComponent(kode)}`
-        );
-
-        if(!response.ok) {
-            throw new Error("Server error");
+        if (script.parentNode) {
+            script.parentNode.removeChild(script);
         }
 
-        const data = await response.json();
+        if (window.kbCallback) {
+            delete window.kbCallback;
+        }
+    }
 
-        if(data.status) {
+    const batasWaktu = setTimeout(function() {
+        if (selesai) return;
+
+        bersihkan();
+
+        tampilPesan(
+            "Server terlalu lama merespons. Silakan coba kembali.",
+            "error"
+        );
+
+        tombol.disabled = false;
+        tombol.innerHTML = "🚀 MULAI BELAJAR";
+    }, 20000);
+
+    window.kbCallback = function(data) {
+        if (selesai) return;
+
+        clearTimeout(batasWaktu);
+        bersihkan();
+
+        if (data && data.status === true && data.url) {
 
             tampilPesan(
                 "✅ Kode benar! Selamat belajar...",
@@ -698,40 +703,48 @@ async function cekKode() {
 
             tombol.innerHTML = "🎉 BERHASIL!";
 
-            setTimeout(() => {
-
+            setTimeout(function() {
                 window.location.href = data.url;
-
             }, 1000);
 
         } else {
 
             tampilPesan(
-                "❌ Kode belajar tidak sesuai. Silakan periksa kembali.",
+                data && data.pesan
+                    ? data.pesan
+                    : "Kode belajar tidak sesuai.",
                 "error"
             );
 
             tombol.disabled = false;
-
             tombol.innerHTML = "🚀 MULAI BELAJAR";
-
             kodeInput.focus();
         }
+    };
 
-    }
+    script.async = true;
 
-    catch(error) {
+    script.onerror = function() {
+        if (selesai) return;
+
+        clearTimeout(batasWaktu);
+        bersihkan();
 
         tampilPesan(
-            "⚠️ Server sedang sibuk atau terjadi kesalahan koneksi.",
+            "Gagal menghubungi server. Periksa koneksi internet atau URL Web App.",
             "error"
         );
 
         tombol.disabled = false;
-
         tombol.innerHTML = "🚀 MULAI BELAJAR";
-    }
+    };
 
+    script.src =
+        API_URL +
+        "?kode=" + encodeURIComponent(kode) +
+        "&t=" + Date.now();
+
+    document.head.appendChild(script);
 }
 
 
